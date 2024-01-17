@@ -19,6 +19,7 @@
 #include "Enemy.h"
 #include "EnemyFSM.h"
 #include "InvenWidget.h"
+#include <../../../../../../../Source/Runtime/Engine/Classes/Animation/AnimInstance.h>
 
 // Sets default values
 ATpsPlayer::ATpsPlayer()
@@ -108,6 +109,8 @@ ATpsPlayer::ATpsPlayer()
 		gun->SetSkeletalMesh(tempGun.Object);
 	}
 
+	//
+
 	// sniper 컴포넌트 생성
 	sniper = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SNIPER"));
 	sniper->SetupAttachment(GetMesh(), TEXT("WeaponPos"));
@@ -127,7 +130,13 @@ ATpsPlayer::ATpsPlayer()
 		sniperWidget = tempSniperWidget.Class;
 	}
 
+	//총쏘는 몽타주 가져오자
+	ConstructorHelpers::FObjectFinder<UAnimMontage> tempMontage(TEXT("/Script/Engine.AnimMontage'/Game/Blueprints/ABP_Fire_Montage.ABP_Fire_Montage'"));
+	if (tempMontage.Succeeded())
+	{
+		fireMontage = tempMontage.Object;
 
+	}
 
 
 
@@ -342,7 +351,44 @@ void ATpsPlayer::EnhancedZoom(const struct FInputActionValue& value)
 }
 
 void ATpsPlayer::EnhancedRealFire()
-{
+	
+{	
+
+	//총쏘는 애니메이션을 하자
+	UAnimInstance* animPlayer = GetMesh()->GetAnimInstance();
+	animPlayer->Montage_Play(fireMontage);
+	//animPlayer-> Montage_JumpToSection(TEXT("Fire"));
+
+	//만약에 걷고 있다면
+	if (isRun == false)
+	{
+		//fire 01로 Montage 점프
+		animPlayer->Montage_JumpToSection(TEXT("fire1"));
+	}
+	
+	else
+	{	
+		//만약에 점프 중이라면
+		
+		if (GetCharacterMovement()->IsFalling())
+		{
+			//fire 01로 Montage 점프
+			animPlayer->Montage_JumpToSection(TEXT("fire1"));
+		}
+
+		//그렇지 않고 뛰고 있다면
+		else
+		{
+			//Fire02로 montage 점프
+			animPlayer->Montage_JumpToSection(TEXT("fire2"));
+		}
+		
+		
+
+	}
+	
+	
+
 	switch (currWeaponMode)
 	{
 		case EWeaponType::GUN:
@@ -415,16 +461,20 @@ void ATpsPlayer::EnhancedRealFire()
 void ATpsPlayer::EnhancedRun(const struct FInputActionValue& value)
 {
 	bool actionValue = value.Get<bool>();
+	//걷기상태인지 달리기 상태인지 구분
+	isRun = actionValue;
 	
 	if (actionValue)
 	{
 		// 달리기 모드
 		GetCharacterMovement()->MaxWalkSpeed = runSpeed;
+		//isRun = true;
 	}
 	else
 	{
 		// 걷기 모드
 		GetCharacterMovement()->MaxWalkSpeed = walkSpeed;
+		//isRun = falue;
 	}
 }
 

@@ -105,6 +105,15 @@ public:
 	UPROPERTY(EditAnywhere)
 	class USniperWidget* sniperUI;
 
+	//ÃÑ½î´Â ¸ùÅ¸ÁÖ
+	UPROPERTY(EditAnywhere)
+	class UAnimMontage* fireMontage;
+
+	//°È±â / ¶Ù±â
+	
+	bool isRun = false;
+
+
 public:
 
 	void MoveAction(FVector2d keyboardInput);
