@@ -80,6 +80,13 @@ public:
 	UPROPERTY(EditAnywhere)
 	float damageDelayTime = 2;
 
+	//AI 컨트롤러 받자
+	UPROPERTY(EditAnywhere)
+	class AAIController* ai;
+
+	//시야각 (cos 시야각)
+	float viewAngle = 180;
+
 public:
 	// 상태가 바뀔때 한번 실행 되는 함수
 	void ChangeState(EEnemyState s);
@@ -98,4 +105,8 @@ public:
 
 	// 시간 체크 함수
 	bool IsWaitComplete(float delay);
+	// 플레이어를 쫒아 갈수 있는 상황인지 
+	bool CanTrace();
+
+	//
 };
