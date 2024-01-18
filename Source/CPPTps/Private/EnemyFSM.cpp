@@ -8,6 +8,9 @@
 #include "AnimEnemy.h"
 #include <Components/CapsuleComponent.h>
 #include <AIController.h>
+//인클루드
+//#include <../../../../../../../Source/Runtime/AIModule/Classes/Navigation/PathFollowingComponent.h>
+#include "Navigation/PathFollowingComponent.h"
 
 
 // Sets default values for this component's properties
@@ -51,6 +54,10 @@ void UEnemyFSM::BeginPlay()
 	// 시야각을 cos(시야각) 으로 하자
 	float radianViewAngle = FMath::DegreesToRadians(viewAngle * 0.5f);
 	viewAngle = FMath::Cos(radianViewAngle);
+
+	//나의 처음 위치를 담아주자
+	originPos = myActor->GetActorLocation();
+
 }
 
 
@@ -81,6 +88,9 @@ void UEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 		break;
 	case EEnemyState::DIE:
 		UpdateDie();
+	case EEnemyState::RETURN:
+		UpdateReturn();
+
 		break;
 	default:
 		break;
@@ -142,6 +152,11 @@ void UEnemyFSM::ChangeState(EEnemyState s)
 		myActor->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		// myActor->Destroy();
 		break;
+	
+	case EEnemyState::RETURN:
+		ai->MoveToLocation(originPos);		
+		break;
+
 	default:
 		break;
 	}
@@ -162,20 +177,31 @@ void UEnemyFSM::UpdateMove()
 	// 1. 플레이어를 향하는 방향을 구하자
 	FVector dir = target->GetActorLocation() - myActor->GetActorLocation();
 	
-
-	// 2. target 위치로 움직이자 (Navigation  기능을 통해서)
-	ai->MoveToLocation(target->GetActorLocation());
-
-	//// 2. 그 방향으로 움직이자. 
-	//myActor->AddMovementInput(dir.GetSafeNormal());
-
-	// 3. 플레이어와의 거리가 공격 범위보다 작으면
-	float dist = dir.Length();
-	if (dist < attackRange)
+	// 처음위치와 나의 위치의 거리
+	float distance = FVector::Distance(originPos, myActor->GetActorLocation());
+	//만약에 distance가 moveRange보다 크면
+	if (distance > moveRange)
 	{
-		// 4. 현재 상태를 ATTACK 로 바꾸자
-		ChangeState(EEnemyState::ATTACK);	
-	}	
+		ChangeState(EEnemyState::RETURN);
+	}
+
+	else
+	{
+		// 2. target 위치로 움직이자 (Navigation  기능을 통해서)
+		ai->MoveToLocation(target->GetActorLocation());
+
+		//// 2. 그 방향으로 움직이자. 
+		//myActor->AddMovementInput(dir.GetSafeNormal());
+
+		// 3. 플레이어와의 거리가 공격 범위보다 작으면
+		float dist = dir.Length();
+		if (dist < attackRange)
+		{
+			// 4. 현재 상태를 ATTACK 로 바꾸자
+			ChangeState(EEnemyState::ATTACK);
+		}
+	}
+	
 }
 
 void UEnemyFSM::UpdateAttack()
@@ -241,6 +267,31 @@ void UEnemyFSM::UpdateDie()
 	}
 }
 
+void UEnemyFSM::UpdateReturn()
+
+{
+	EPathFollowingRequestResult::Type result = ai->MoveToLocation(originPos);
+	if (result == EPathFollowingRequestResult::Type::AlreadyAtGoal)
+	{ 
+		//idle 상태로 전환
+		ChangeState(EEnemyState::IDLE);
+	}
+	//// 내 위치와 처음 위치의 거리를 구하자.
+	//float dist = FVector::Distance(originPos, myActor->GetActorLocation());
+	//UE_LOG(LogTemp, Warning, TEXT("dist : %f"), dist);
+
+	////그 거리가 50보다 작으면
+	//if (dist < 50)
+	//{
+	//	//idle 상태로 전환
+	//	ChangeState(EEnemyState::IDLE);
+
+	//}
+	
+
+
+}
+
 bool UEnemyFSM::IsWaitComplete(float delay)
 {
 	currTime += GetWorld()->DeltaTimeSeconds;
@@ -265,7 +316,26 @@ bool UEnemyFSM::CanTrace()
 
 		if (dot > viewAngle)
 		{
-			return true;
+			//플레이어를 향하는 방향에 장애물(line trace)
+			// LineTrace 시작 지점
+			FVector start = myActor->GetActorLocation();
+			// LineTrace 끝 지점
+			FVector end = target->GetActorLocation();
+			// 어딘가 부딪혔을 때 부딪힌 Actor 정보를 담을 변수
+			FHitResult hitInfo;
+			// 충돌 옵션 설정
+			FCollisionQueryParams param;
+			//나는무시
+			param.AddIgnoredActor(myActor);
+			bool hit = GetWorld()->LineTraceSingleByChannel(hitInfo, start, end, ECC_Visibility,param);
+			if (hit)
+			{
+				if(hitInfo.GetActor()->GetName().Contains(TEXT("Player")) == false);
+				{
+					return false;
+				}
+				
+			}
 		}
 
 		//// 내적한 값을 acos 하자

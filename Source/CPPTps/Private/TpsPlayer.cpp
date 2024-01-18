@@ -20,6 +20,7 @@
 #include "EnemyFSM.h"
 #include "InvenWidget.h"
 #include "InvenItem.h"
+#include <../../../../../../../Source/Runtime/Engine/Classes/Components/CapsuleComponent.h>
 
 // Sets default values
 ATpsPlayer::ATpsPlayer()
@@ -134,6 +135,12 @@ ATpsPlayer::ATpsPlayer()
 	{
 		fireMontage = tempMontage.Object;
 	}
+
+	//collision preset을 player로
+	//UCapsuleComponent인클루드
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("PlayerProfile"));
+	GetMesh()->SetCollisionProfileName(TEXT("NoCollision"));
+
 
 
 //-------------------------------------------
