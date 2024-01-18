@@ -127,6 +127,8 @@ public:
 	void EnhancedRealFire();
 	void EnhancedRun(const struct FInputActionValue& value);
 
+	void Test(int32 n);
+
 
 
 
