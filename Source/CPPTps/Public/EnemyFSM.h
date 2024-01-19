@@ -12,6 +12,7 @@ enum class EEnemyState : uint8
 {
 	IDLE,
 	MOVE,
+	PATROL,
 	RETURN,
 	ATTACK,
 	ATTACK_DELAY,
@@ -84,6 +85,10 @@ public:
 	// 피격대기시간
 	UPROPERTY(EditAnywhere)
 	float damageDelayTime = 2;
+	//idle상태 시간
+	UPROPERTY(EditAnywhere)
+	float idleDelayTime = 2;
+
 
 	// AI Controller
 	UPROPERTY(EditAnywhere)
@@ -94,6 +99,8 @@ public:
 
 	// 나의 처음 위치
 	FVector originPos;
+	// patrol 해야하는 랜덤한 위치
+	FVector patrolPos;
 
 public:
 	// 상태가 바뀔때 한번 실행 되는 함수
@@ -102,6 +109,9 @@ public:
 	void UpdateIdle();
 	// 이동
 	void UpdateMove();
+	//
+	void UpdatePatrol();
+
 	// 공격
 	void UpdateAttack();
 	// 공격 대기

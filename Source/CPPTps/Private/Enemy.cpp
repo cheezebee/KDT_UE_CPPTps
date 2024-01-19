@@ -39,6 +39,9 @@ AEnemy::AEnemy()
 	// Mesh 컴포넌트 CollisionPreset = NoCollision
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("EnemyProfile"));
 	GetMesh()->SetCollisionProfileName(TEXT("NoCollision"));
+
+	//auto possess ai 설정 (spawn, placed 둘다 동작하게)
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
 // Called when the game starts or when spawned
